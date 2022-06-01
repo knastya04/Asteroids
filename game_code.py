@@ -11,7 +11,6 @@ sound_folder = path.join(path.dirname(__file__), 'sounds')  # поиске па�
 WIDTH = 680
 HEIGHT = 400
 FPS = 60
-POWERUP_TIME = 5000
 BAR_LENGTH = 100
 BAR_HEIGHT = 10
 WHITE = (255, 255, 255)
@@ -66,9 +65,6 @@ for i in range(1, 8):
     img.set_colorkey(DARK)
     explosion_anim['player'].append(img)
 
-powerup_images = dict()
-powerup_images['shield'] = pygame.image.load(path.join(img_dir, 'life-long-king.png')).convert()
-powerup_images['gun'] = pygame.image.load(path.join(img_dir, 'baff-energy.png')).convert()
 shooting_sound = pygame.mixer.Sound(path.join(sound_folder, 'pew.wav'))
 missile_sound = pygame.mixer.Sound(path.join(sound_folder, 'rocket.ogg'))
 expl_sounds = []
@@ -88,7 +84,6 @@ def main_menu(text):
 
     bg = pygame.image.load(path.join(img_dir, "holl.gif")).convert()
     bg = pygame.transform.scale(bg, (WIDTH, HEIGHT), screen)
-
     screen.blit(bg, (0, 0))
     pygame.display.update()
 
@@ -125,7 +120,7 @@ def draw_text(surf, text, size, x, y):
     surf.blit(text_surface, text_rect)
 
 
-# отрисовка уровня
+# отрисовка шкалы жизней
 def draw_shield_bar(surf, x, y, pct):
     pct = max(pct, 0)
     fill = (pct / 100) * BAR_LENGTH
@@ -135,7 +130,7 @@ def draw_shield_bar(surf, x, y, pct):
     pygame.draw.rect(surf, WHITE, outline_rect, 2)
 
 
-# отрисовка камней
+# отрисовка жизней
 def draw_lives(surf, x, y, lives, img):
     for i in range(lives):
         img_rect = img.get_rect()
@@ -144,7 +139,7 @@ def draw_lives(surf, x, y, lives, img):
         surf.blit(img, img_rect)
 
 
-# создание обьекта метеорита
+# создание нового метеорита
 def newmob():
     mob_element = Mob()
     all_sprites.add(mob_element)
@@ -197,17 +192,8 @@ class Player(pygame.sprite.Sprite):
         self.power = 1
         self.power_timer = pygame.time.get_ticks()
 
-    # обновление данных
+    # обновление движения
     def update(self):
-        if self.power >= 2 and pygame.time.get_ticks() - self.power_time > POWERUP_TIME:
-            self.power -= 1
-            self.power_time = pygame.time.get_ticks()
-
-        if self.hidden and pygame.time.get_ticks() - self.hide_timer > 1000:
-            self.hidden = False
-            self.rect.centerx = 10
-            self.rect.bottom = HEIGHT / 2
-
         self.speedx = 0
         self.speedy = 0
         keystate = pygame.key.get_pressed()
@@ -245,24 +231,6 @@ class Player(pygame.sprite.Sprite):
                 all_sprites.add(bullet)
                 bullets.add(bullet)
                 shooting_sound.play()
-            if self.power == 2:
-                bullet1 = Bullet(self.rect.right, self.rect.top)
-                bullet2 = Bullet(self.rect.right, self.rect.bottom)
-                all_sprites.add(bullet1)
-                all_sprites.add(bullet2)
-                bullets.add(bullet1)
-                bullets.add(bullet2)
-                shooting_sound.play()
-
-            if self.power >= 3:
-                bullet1 = Bullet(self.rect.right, self.rect.top)
-                bullet2 = Bullet(self.rect.right, self.rect.bottom)
-                all_sprites.add(bullet1)
-                all_sprites.add(bullet2)
-                bullets.add(bullet1)
-                bullets.add(bullet2)
-                shooting_sound.play()
-                missile_sound.play()
 
     def hide(self):
         self.hidden = True
@@ -377,7 +345,6 @@ while running:
             newmob()
 
         bullets = pygame.sprite.Group()
-        powerups = pygame.sprite.Group()
 
         score = 0
         text = ["Нажмите [ENTER] чтобы начать", "Управление осуществляется с помощью кнопок со стрелками", "и [Q] "
@@ -396,7 +363,7 @@ while running:
     all_sprites.update()
     hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
     for hit in hits:
-        score += 50 - hit.radius
+        score += 50
         random.choice(expl_sounds).play()
         explosion = Explosion(hit.rect.center, 'lg')
         all_sprites.add(explosion)
